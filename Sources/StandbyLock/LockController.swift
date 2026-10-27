@@ -45,7 +45,7 @@ final class LockController {
             .disableSessionTermination, .disableHideApplication,
         ]
         if Settings.preventSleepWhileLocked { sleepPreventer.start() }
-        if Settings.blockSystemShortcuts { keyboardGuard.start() }
+        keyboardGuard.start()
 
         buildWindows()
         installObservers()

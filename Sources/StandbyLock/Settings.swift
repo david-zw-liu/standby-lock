@@ -5,7 +5,6 @@ enum Settings {
 
     private enum Key {
         static let preventSleepWhileLocked = "preventSleepWhileLocked"
-        static let blockSystemShortcuts = "blockSystemShortcuts"
         static let idleLockMinutes = "idleLockMinutes"
     }
 
@@ -14,7 +13,6 @@ enum Settings {
     static func registerDefaults() {
         defaults.register(defaults: [
             Key.preventSleepWhileLocked: true,
-            Key.blockSystemShortcuts: false,
             Key.idleLockMinutes: 0,
         ])
     }
@@ -22,11 +20,6 @@ enum Settings {
     static var preventSleepWhileLocked: Bool {
         get { defaults.bool(forKey: Key.preventSleepWhileLocked) }
         set { defaults.set(newValue, forKey: Key.preventSleepWhileLocked) }
-    }
-
-    static var blockSystemShortcuts: Bool {
-        get { defaults.bool(forKey: Key.blockSystemShortcuts) }
-        set { defaults.set(newValue, forKey: Key.blockSystemShortcuts) }
     }
 
     static var idleLockMinutes: Int {

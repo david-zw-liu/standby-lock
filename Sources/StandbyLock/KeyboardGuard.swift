@@ -2,7 +2,7 @@ import AppKit
 import ApplicationServices
 
 /// 鎖定期間透過 CGEventTap 吃掉所有帶 ⌘ / ⌃ 的按鍵，避免 Spotlight、Mission Control 等系統快捷鍵。
-/// 需要「輔助使用」權限；沒有權限時靜默跳過，鎖定畫面本身仍然有效。
+/// macOS 要求「輔助使用」權限才能建立可修改事件的 tap；尚未授權時靜默跳過，鎖定畫面本身仍然有效。
 final class KeyboardGuard {
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?

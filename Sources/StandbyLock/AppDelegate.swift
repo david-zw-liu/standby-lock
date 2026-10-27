@@ -11,7 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let lockItem = NSMenuItem(title: "立即鎖定", action: #selector(lockNow), keyEquivalent: "l")
     private let passwordItem = NSMenuItem(title: "設定密碼…", action: #selector(showPasswordWindow), keyEquivalent: "")
     private let preventSleepItem = NSMenuItem(title: "鎖定時阻止睡眠", action: #selector(togglePreventSleep), keyEquivalent: "")
-    private let blockShortcutsItem = NSMenuItem(title: "鎖定時攔截系統快捷鍵", action: #selector(toggleBlockShortcuts), keyEquivalent: "")
+    private let accessibilityItem = NSMenuItem(title: "授權輔助使用權限…", action: #selector(requestAccessibility), keyEquivalent: "")
     private let launchAtLoginItem = NSMenuItem(title: "登入時自動啟動", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
     private let idleMenu = NSMenu()
 
@@ -28,6 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.lockNow() }
         } else if !PasswordStore.hasPassword {
             showPasswordWindow()
+        } else if !KeyboardGuard.hasPermission {
+            KeyboardGuard.requestPermission()
         }
     }
 
@@ -48,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
 
         lockItem.keyEquivalentModifierMask = [.control, .option, .command]
-        for item in [lockItem, passwordItem, preventSleepItem, blockShortcutsItem, launchAtLoginItem] {
+        for item in [lockItem, passwordItem, preventSleepItem, accessibilityItem, launchAtLoginItem] {
             item.target = self
         }
 
@@ -68,8 +70,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(idleItem)
 
         menu.addItem(preventSleepItem)
-        menu.addItem(blockShortcutsItem)
         menu.addItem(launchAtLoginItem)
+        menu.addItem(accessibilityItem)
         menu.addItem(.separator())
 
         let about = NSMenuItem(title: "關於 StandbyLock", action: #selector(showAbout), keyEquivalent: "")
@@ -86,10 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         lockItem.title = PasswordStore.hasPassword ? "立即鎖定" : "立即鎖定（請先設定密碼）"
         passwordItem.title = PasswordStore.hasPassword ? "變更密碼…" : "設定密碼…"
         preventSleepItem.state = Settings.preventSleepWhileLocked ? .on : .off
-        blockShortcutsItem.state = Settings.blockSystemShortcuts ? .on : .off
-        blockShortcutsItem.title = Settings.blockSystemShortcuts && !KeyboardGuard.hasPermission
-            ? "鎖定時攔截系統快捷鍵（尚未授權輔助使用）"
-            : "鎖定時攔截系統快捷鍵"
+        accessibilityItem.isHidden = KeyboardGuard.hasPermission
         launchAtLoginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         for item in idleMenu.items {
             item.state = item.tag == Settings.idleLockMinutes ? .on : .off
@@ -115,6 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let controller = PasswordWindowController()
         controller.onPasswordChanged = { [weak self] in
             self?.passwordWindow = nil
+            if PasswordStore.hasPassword, !KeyboardGuard.hasPermission {
+                self?.requestAccessibility()
+            }
         }
         passwordWindow = controller
         controller.present()
@@ -129,15 +131,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Settings.preventSleepWhileLocked.toggle()
     }
 
-    @objc private func toggleBlockShortcuts() {
-        let enabling = !Settings.blockSystemShortcuts
-        Settings.blockSystemShortcuts = enabling
-        guard enabling, !KeyboardGuard.hasPermission else { return }
-
+    @objc private func requestAccessibility() {
         KeyboardGuard.requestPermission()
         let alert = NSAlert()
         alert.messageText = "需要「輔助使用」權限"
-        alert.informativeText = "攔截 ⌘ / ⌃ 系統快捷鍵需要在「系統設定 › 隱私權與安全性 › 輔助使用」中允許 StandbyLock。授權後下次鎖定即會生效；未授權時鎖定畫面仍可正常使用。"
+        alert.informativeText = "鎖定時要攔截 ⌘ / ⌃ 系統快捷鍵（Spotlight、Mission Control 等），macOS 要求在「系統設定 › 隱私權與安全性 › 輔助使用」中允許 StandbyLock。授權後下次鎖定即會生效；未授權時鎖定畫面仍可正常使用。"
         alert.addButton(withTitle: "開啟系統設定")
         alert.addButton(withTitle: "稍後")
         NSApp.activate(ignoringOtherApps: true)
@@ -170,7 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         macOS 待機鎖定工具。
 
         • ⌃⌥⌘L 或選單「立即鎖定」進入鎖定畫面
-        • 鎖定期間阻止電腦進入睡眠
+        • 鎖定期間阻止電腦進入睡眠，並攔截系統快捷鍵
         • 需輸入待機密碼才能解鎖
         """
         alert.addButton(withTitle: "好")

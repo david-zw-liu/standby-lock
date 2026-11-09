@@ -20,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Settings.registerDefaults()
         setupStatusItem()
 
-        hotKey = HotKey(keyCode: UInt32(kVK_ANSI_L), modifiers: UInt32(controlKey | optionKey | cmdKey)) { [weak self] in
+        hotKey = HotKey(keyCode: UInt32(kVK_ANSI_L), modifiers: UInt32(shiftKey | optionKey | cmdKey)) { [weak self] in
             self?.lockNow()
         }
 
@@ -43,13 +43,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "lock.shield", accessibilityDescription: "StandbyLock")
-            button.toolTip = "StandbyLock ─ ⌃⌥⌘L 鎖定"
+            button.toolTip = "StandbyLock ─ ⇧⌥⌘L 鎖定"
         }
 
         let menu = NSMenu()
         menu.delegate = self
 
-        lockItem.keyEquivalentModifierMask = [.control, .option, .command]
+        lockItem.keyEquivalentModifierMask = [.shift, .option, .command]
         for item in [lockItem, passwordItem, preventSleepItem, accessibilityItem, launchAtLoginItem] {
             item.target = self
         }
@@ -167,7 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.informativeText = """
         macOS 待機鎖定工具。
 
-        • ⌃⌥⌘L 或選單「立即鎖定」進入鎖定畫面
+        • ⇧⌥⌘L 或選單「立即鎖定」進入鎖定畫面
         • 鎖定期間阻止電腦進入睡眠，並攔截系統快捷鍵
         • 需輸入待機密碼才能解鎖
         """

@@ -18,6 +18,7 @@ final class LockController {
 
     private(set) var isLocked = false
     private var windows: [LockWindow] = []
+    private var backgroundImage: CGImage?
     private let sleepPreventer = SleepPreventer()
     private let keyboardGuard = KeyboardGuard()
     private var observerRemovers: [() -> Void] = []
@@ -47,6 +48,7 @@ final class LockController {
         if Settings.preventSleepWhileLocked { sleepPreventer.start() }
         keyboardGuard.start()
 
+        backgroundImage = Background.render(maskPercent: Settings.maskPercent)
         buildWindows()
         installObservers()
         bringToFront()
@@ -64,6 +66,7 @@ final class LockController {
         observerRemovers.forEach { $0() }
         observerRemovers = []
         tearDownWindows()
+        backgroundImage = nil
         keyboardGuard.stop()
         sleepPreventer.stop()
         NSApp.presentationOptions = []
@@ -96,7 +99,13 @@ final class LockController {
         tearDownWindows()
         let screens = NSScreen.screens
         windows = screens.enumerated().map { index, screen in
-            LockWindow(screen: screen, isPrimary: index == 0, controller: self)
+            LockWindow(
+                screen: screen,
+                isPrimary: index == 0,
+                controller: self,
+                backgroundImage: backgroundImage,
+                dimAlpha: Mask.dimAlpha(percent: Settings.maskPercent)
+            )
         }
         windows.forEach { $0.orderFrontRegardless() }
     }

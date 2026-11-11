@@ -3,6 +3,8 @@ import AppKit
 final class LockWindow: NSWindow {
     let isPrimary: Bool
     private weak var controller: LockController?
+    private let backgroundImage: CGImage?
+    private let dimAlpha: CGFloat
 
     private var passwordField: NSSecureTextField?
     private var messageLabel: NSTextField?
@@ -25,9 +27,11 @@ final class LockWindow: NSWindow {
         return f
     }()
 
-    init(screen: NSScreen, isPrimary: Bool, controller: LockController) {
+    init(screen: NSScreen, isPrimary: Bool, controller: LockController, backgroundImage: CGImage?, dimAlpha: CGFloat) {
         self.isPrimary = isPrimary
         self.controller = controller
+        self.backgroundImage = backgroundImage
+        self.dimAlpha = dimAlpha
         super.init(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
 
         level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
@@ -81,6 +85,20 @@ final class LockWindow: NSWindow {
         root.layer = gradient
         root.wantsLayer = true
         contentView = root
+
+        if let backgroundImage {
+            let imageLayer = CALayer()
+            imageLayer.contents = backgroundImage
+            imageLayer.contentsGravity = .resizeAspectFill
+            imageLayer.masksToBounds = true
+            let dimLayer = CALayer()
+            dimLayer.backgroundColor = NSColor.black.withAlphaComponent(dimAlpha).cgColor
+            for layer in [imageLayer, dimLayer] {
+                layer.frame = root.bounds
+                layer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+                gradient.addSublayer(layer)
+            }
+        }
 
         let stack = NSStackView()
         stack.orientation = .vertical
@@ -145,6 +163,14 @@ final class LockWindow: NSWindow {
         label.textColor = color
         label.alignment = .center
         label.isSelectable = false
+        if backgroundImage != nil {
+            // 背景圖可能很亮，加陰影確保文字可讀。
+            let shadow = NSShadow()
+            shadow.shadowColor = NSColor.black.withAlphaComponent(0.6)
+            shadow.shadowBlurRadius = 6
+            shadow.shadowOffset = NSSize(width: 0, height: -1)
+            label.shadow = shadow
+        }
         return label
     }
 

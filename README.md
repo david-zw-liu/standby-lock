@@ -8,6 +8,8 @@ macOS 待機鎖定工具。按下快捷鍵後整個螢幕被鎖定畫面蓋住�
 
 - **待機密碼**：首次啟動會要求設定，之後可在選單列變更或移除。密碼以 PBKDF2-HMAC-SHA256（200,000 次、隨機 salt）雜湊後儲存，不保存明文。
 - **鎖定畫面**：覆蓋所有螢幕的全螢幕視窗，位於系統最高視窗層級，顯示時間、日期與密碼輸入框。鎖定時隱藏 Dock 與選單列，停用 ⌘Tab 切換程式、強制結束視窗、登出/關機選單與隱藏程式。
+- **自訂背景圖**：選單列 → 背景圖片 → 選擇圖片…，圖片會複製到 `~/Library/Application Support/StandbyLock/`。選「使用預設背景」可還原成內建漸層。
+- **背景遮罩程度**：選單列內的滑桿，0–100%，同時調整背景圖的模糊程度與黑色陰影濃度（預設 50%）。只對自訂背景圖生效。
 - **阻止睡眠**：鎖定期間持有 `PreventUserIdleSystemSleep` 與 `PreventUserIdleDisplaySleep` 兩個 power assertion，解鎖後釋放。可在選單關閉。
 - **防猜密碼**：連續輸錯 5 次會暫停輸入 30 秒。
 - **全域快捷鍵**：`⇧⌥⌘L` 立即鎖定。
@@ -43,6 +45,8 @@ open /Applications/StandbyLock.app --args --lock
 | 鎖定 | `⇧⌥⌘L`，或選單列 → 立即鎖定 |
 | 解鎖 | 在鎖定畫面輸入密碼後按 Return |
 | 變更 / 移除密碼 | 選單列 → 變更密碼… |
+| 更換背景圖 | 選單列 → 背景圖片 → 選擇圖片… |
+| 調整遮罩 | 選單列 → 拖曳「背景遮罩程度」滑桿 |
 | 結束程式 | 選單列 → 結束 StandbyLock（鎖定中無法結束） |
 
 ## 忘記密碼
@@ -76,6 +80,7 @@ Sources/StandbyLock/
   LockController.swift         鎖定狀態、視窗管理、防睡眠、閒置偵測
   LockWindow.swift             全螢幕鎖定畫面
   PasswordWindowController.swift  設定 / 變更 / 移除密碼視窗
+  Background.swift             背景圖儲存、遮罩程度、模糊處理
   PasswordStore.swift          PBKDF2 密碼雜湊儲存
   SleepPreventer.swift         ProcessInfo activity（power assertion）
   KeyboardGuard.swift          CGEventTap 攔截 ⌘ / ⌃ 快捷鍵
